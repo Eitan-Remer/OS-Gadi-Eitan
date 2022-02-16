@@ -55,8 +55,8 @@ struct job_t jobs[MAXJOBS]; /* The job list */
 /* Function prototypes */
 
 /* Here are the functions that you will implement */
-void eval(char *cmdline);
-int builtin_cmd(char **argv);
+void eval(char *cmdline);   //More or less
+int builtin_cmd(char **argv);   //More or less
 void do_bgfg(char **argv);
 void waitfg(pid_t pid);
 
