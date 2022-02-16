@@ -56,14 +56,14 @@ struct job_t jobs[MAXJOBS]; /* The job list */
 /* Function prototypes */
 
 /* Here are the functions that you will implement */
-void eval(char *cmdline);   //More or less
-int builtin_cmd(char **argv);   //More or less
-void do_bgfg(char **argv);  //NEED TO DO
-void waitfg(pid_t pid); //NEED TO DO
+void eval(char *cmdline);   // (70 lines) More or less 
+int builtin_cmd(char **argv);   // (25 lines) More or less
+void do_bgfg(char **argv);  // (50 lines) NEED TO DO
+void waitfg(pid_t pid); // (25 lines) NEED TO DO
 
-void sigchld_handler(int sig);  //NEED TO DO
-void sigtstp_handler(int sig);  //NEED TO DO
-void sigint_handler(int sig);   //NEED TO DO
+void sigchld_handler(int sig);  // (80 lines) NEED TO DO
+void sigtstp_handler(int sig);  // (15 lines) NEED TO DO
+void sigint_handler(int sig);   // (15 lines) NEED TO DO
 
 /* Here are helper routines that we've provided for you */
 int parseline(const char *cmdline, char **argv); 
@@ -190,9 +190,9 @@ void eval(char *cmdline)
             int status;
             if (waitpid(pid, &status, 0) < 0)
                 unix_error("waitfg: waitpid error");
-        }else{
+        }else
             printf("%d %s", pid, cmdline);
-        }
+    }
     return;
 }
 
@@ -257,8 +257,7 @@ int parseline(const char *cmdline, char **argv)
  * builtin_cmd - If the user has typed a built-in command then execute
  *    it immediately.  
  */
-int builtin_cmd(char **argv) 
-{
+int builtin_cmd(char **argv) {
     if (!strcmp(argv[0], "quit")) /* quit command */
 	    exit(0);  
     if (!strcmp(argv[0], "&"))    /* Ignore singleton & */
@@ -269,8 +268,7 @@ int builtin_cmd(char **argv)
 /* 
  * do_bgfg - Execute the builtin bg and fg commands
  */
-void do_bgfg(char **argv) 
-{
+void do_bgfg(char **argv) {
     return;
 }
 
