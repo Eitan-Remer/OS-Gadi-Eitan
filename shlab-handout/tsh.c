@@ -13,6 +13,7 @@
 #include <sys/wait.h>
 #include <errno.h>
 
+
 /* Misc manifest constants */
 #define MAXLINE    1024   /* max line size */
 #define MAXARGS     128   /* max args on a command line */
@@ -161,7 +162,7 @@ int main(int argc, char **argv)
  * the foreground, wait for it to terminate and then return.  Note:
  * each child process must have a unique process group ID so that our
  * background children don't receive SIGINT (SIGTSTP) from the kernel
- * when we type ctrl-c (ctrl-z) at the keyboard.  
+ * when we type ctrl-c (ctrl-z) at the keyboard.
 */
 void eval(char *cmdline) 
 {
@@ -171,9 +172,10 @@ void eval(char *cmdline)
     pid_t pid;           /* Process id */
     
     strcpy(buf, cmdline);
+    //printf("strcpy");
     bg = parseline(buf, argv); 
     if (argv[0] == NULL)  
-	return;   /* Ignore empty lines */
+	    return;   /* Ignore empty lines */
 
     if (!builtin_cmd(argv)) { 
         if ((pid = fork()) == 0) {   /* Child runs user job */
@@ -182,16 +184,15 @@ void eval(char *cmdline)
                 exit(0);
             }
         }
-
+    
 	/* Parent waits for foreground job to terminate */
-	if (!bg) {
-	    int status;
-	    if (waitpid(pid, &status, 0) < 0)
-		unix_error("waitfg: waitpid error");
-	}
-	else
-	    printf("%d %s", pid, cmdline);
-    }
+        if (!bg) {
+            int status;
+            if (waitpid(pid, &status, 0) < 0)
+                unix_error("waitfg: waitpid error");
+        }else{
+            printf("%d %s", pid, cmdline);
+        }
     return;
 }
 
@@ -226,19 +227,19 @@ int parseline(const char *cmdline, char **argv)
     }
 
     while (delim) {
-	argv[argc++] = buf;
-	*delim = '\0';
-	buf = delim + 1;
-	while (*buf && (*buf == ' ')) /* ignore spaces */
-	       buf++;
+        argv[argc++] = buf;
+        *delim = '\0';
+        buf = delim + 1;
+        while (*buf && (*buf == ' ')) /* ignore spaces */
+            buf++;
 
-	if (*buf == '\'') {
-	    buf++;
-	    delim = strchr(buf, '\'');
-	}
-	else {
-	    delim = strchr(buf, ' ');
-	}
+        if (*buf == '\'') {
+            buf++;
+            delim = strchr(buf, '\'');
+        }
+        else {
+            delim = strchr(buf, ' ');
+        }
     }
     argv[argc] = NULL;
     
@@ -292,9 +293,35 @@ void waitfg(pid_t pid)
  *     available zombie children, but doesn't wait for any other
  *     currently running children to terminate.  
  */
-void sigchld_handler(int sig) 
-{
-    return;
+void sigchld_handler(int sig) {
+    // volatile sig_atomic_t pid;
+    // int olderrno = errno;
+    // pid = waitpid(-1, NULL, 0);
+    // errno = olderrno;
+    // sigset_t mask, prev;
+
+    // signal(SIGCHLD, sigchld_handler);
+    // signal(SIGINT, sigint_handler);
+    // sigemptyset(&mask);
+    // sigaddset(&mask, SIGCHLD);
+
+    // while (1) {
+    //     sigprocmask(SIG_BLOCK, &mask, &prev); /* Block SIGCHLD */
+    //     if (fork() == 0) /* Child */
+    //         exit(0);
+
+    //     /* Parent */
+    //     pid = 0; 
+    //     sigprocmask(SIG_SETMASK, &prev, NULL); /* Unblock SIGCHLD */
+        
+    //     /* Wait for SIGCHLD to be received (wasteful) */
+    //     while (!pid) 
+    //         ;
+
+    //     /* Do some work after receiving SIGCHLD */
+    //     printf(".");
+    // }
+    // exit(0);
 }
 
 /* 
@@ -534,6 +561,151 @@ void sigquit_handler(int sig)
 {
     printf("Terminating after receipt of SIGQUIT signal\n");
     exit(1);
+}
+pid_t fork1(void) {
+    pid_t pid;
+
+    if ((pid = fork()) < 0)
+	unix_error("Fork error");
+    return pid;
+}
+/* $end forkwrapper */
+
+void Execve(const char *filename, char *const argv[], char *const envp[]) 
+{
+    if (execve(filename, argv, envp) < 0)
+	unix_error("Execve error");
+}
+
+/* $begin wait */
+pid_t Wait(int *status) 
+{
+    pid_t pid;
+
+    if ((pid  = wait(status)) < 0)
+	unix_error("Wait error");
+    return pid;
+}
+/* $end wait */
+
+pid_t Waitpid(pid_t pid, int *iptr, int options) 
+{
+    pid_t retpid;
+
+    if ((retpid  = waitpid(pid, iptr, options)) < 0) 
+	unix_error("Waitpid error");
+    return(retpid);
+}
+
+/* $begin kill */
+void Kill(pid_t pid, int signum) 
+{
+    int rc;
+
+    if ((rc = kill(pid, signum)) < 0)
+	unix_error("Kill error");
+}
+/* $end kill */
+
+void Pause() 
+{
+    (void)pause();
+    return;
+}
+
+unsigned int Sleep(unsigned int secs) 
+{
+    unsigned int rc;
+
+    if ((rc = sleep(secs)) < 0)
+	unix_error("Sleep error");
+    return rc;
+}
+
+unsigned int Alarm(unsigned int seconds) {
+    return alarm(seconds);
+}
+ 
+void Setpgid(pid_t pid, pid_t pgid) {
+    int rc;
+
+    if ((rc = setpgid(pid, pgid)) < 0)
+	unix_error("Setpgid error");
+    return;
+}
+
+pid_t Getpgrp(void) {
+    return getpgrp();
+}
+
+/************************************
+ * Wrappers for Unix signal functions 
+ ***********************************/
+
+/* $begin sigaction */
+// handler_t *Signal(int signum, handler_t *handler) 
+// {
+//     struct sigaction action, old_action;
+
+//     action.sa_handler = handler;  
+//     sigemptyset(&action.sa_mask); /* Block sigs of type being handled */
+//     action.sa_flags = SA_RESTART; /* Restart syscalls if possible */
+
+//     if (sigaction(signum, &action, &old_action) < 0)
+// 	unix_error("Signal error");
+//     return (old_action.sa_handler);
+// }
+/* $end sigaction */
+
+// void Sigprocmask(int how, const sigset_t *set, sigset_t *oldset)
+// {
+//     if (sigprocmask(how, set, oldset) < 0)
+// 	unix_error("Sigprocmask error");
+//     return;
+// }
+
+// void Sigemptyset(sigset_t *set)
+// {
+//     if (sigemptyset(set) < 0)
+// 	unix_error("Sigemptyset error");
+//     return;
+// }
+
+void Sigfillset(sigset_t *set)
+{ 
+    if (sigfillset(set) < 0)
+	unix_error("Sigfillset error");
+    return;
+}
+
+// void Sigaddset(sigset_t *set, int signum)
+// {
+//     if (sigaddset(set, signum) < 0)
+// 	unix_error("Sigaddset error");
+//     return;
+// }
+
+void Sigdelset(sigset_t *set, int signum)
+{
+    if (sigdelset(set, signum) < 0)
+	unix_error("Sigdelset error");
+    return;
+}
+
+int Sigismember(const sigset_t *set, int signum)
+{
+    int rc;
+    if ((rc = sigismember(set, signum)) < 0)
+	unix_error("Sigismember error");
+    return rc;
+}
+
+int Sigsuspend(const sigset_t *set)
+{
+    int rc = sigsuspend(set); /* always returns -1 */
+    if (errno != EINTR)
+        unix_error("Sigsuspend error");
+    return rc;
 }
 
 
