@@ -58,12 +58,12 @@ struct job_t jobs[MAXJOBS]; /* The job list */
 /* Here are the functions that you will implement */
 void eval(char *cmdline);   //More or less
 int builtin_cmd(char **argv);   //More or less
-void do_bgfg(char **argv);
-void waitfg(pid_t pid);
+void do_bgfg(char **argv);  //NEED TO DO
+void waitfg(pid_t pid); //NEED TO DO
 
-void sigchld_handler(int sig);
-void sigtstp_handler(int sig);
-void sigint_handler(int sig);
+void sigchld_handler(int sig);  //NEED TO DO
+void sigtstp_handler(int sig);  //NEED TO DO
+void sigint_handler(int sig);   //NEED TO DO
 
 /* Here are helper routines that we've provided for you */
 int parseline(const char *cmdline, char **argv); 
