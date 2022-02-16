@@ -111,9 +111,9 @@ int main(int argc, char **argv)
         case 'p':             /* don't print a prompt */
             emit_prompt = 0;  /* handy for automatic testing */
 	    break;
-	default:
+	    default:
             usage();
-	}
+	    }
     }
 
     /* Install the signal handlers */
@@ -258,16 +258,30 @@ int parseline(const char *cmdline, char **argv)
  *    it immediately.  
  */
 int builtin_cmd(char **argv) {
-    if (!strcmp(argv[0], "quit")) /* quit command */
+    //I believe that execuuring immediately means 0, its also possible that bg and fg should have different return values
+    //not sure if bg means it shoukd never be terminated, or it should wait until the end
+    //pretty sure it probably should be run immediately, and just never terminated
+    if(argv[0] == "bg" || argv[0] == "fg"){
+        //almost positive that this should be in eval, the textbook/website code is only for a shell that has 2 commands
+        //so we will likely have to adjust eval and that will include using this method there
+        //built in command just tells us what we should do, but other methods will actually do it
+        do_bgfg(argv);
+        return 1;
+    }
+    if (!strcmp(argv[0], "quit")){ /* quit command */
+        // sigchld_handler(0); //NEED TO FIGURE OUT WHAT TO PASS IN
 	    exit(0);  
-    if (!strcmp(argv[0], "&"))    /* Ignore singleton & */
+    }
+    if (!strcmp(argv[0], "&")){    /* Ignore singleton & */
 	    return 1;
+    }
     return 0;       /* not a builtin command */
 }
 
 /* 
  * do_bgfg - Execute the builtin bg and fg commands
  */
+//check page 790
 void do_bgfg(char **argv) {
     return;
 }
@@ -327,6 +341,7 @@ void sigchld_handler(int sig) {
  *    user types ctrl-c at the keyboard.  Catch it and send it along
  *    to the foreground job.  
  */
+//check page 799/800
 void sigint_handler(int sig) 
 {
     return;
