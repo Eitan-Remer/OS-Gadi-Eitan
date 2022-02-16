@@ -1,7 +1,7 @@
 /* 
  * tsh - A tiny shell program with job control
  * 
- * <Gadi Polster and Eitan Remer>
+ * <Gadi Polster: 800553989 and Eitan Remer: 800615624>
  */
 #include <stdio.h>
 #include <stdlib.h>
