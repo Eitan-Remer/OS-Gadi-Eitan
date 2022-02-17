@@ -183,8 +183,14 @@ void eval(char *cmdline)
     pid_t pid;           /* Process id */
     
     strcpy(buf, cmdline);
+    
     //printf("strcpy");
     bg = parseline(buf, argv); 
+    // if ((pid = fork()) == 0) {
+    // } else {
+        
+    // }
+    
     if (argv[0] == NULL)  
 	    return;   /* Ignore empty lines */
 
@@ -194,6 +200,8 @@ void eval(char *cmdline)
                 printf("%s: Command not found.\n", argv[0]);
                 exit(0);
             }
+        } else {
+            addjob(jobs,pid, bg+1, buf);
         }
     
 	/* Parent waits for foreground job to terminate */
@@ -269,15 +277,33 @@ int parseline(const char *cmdline, char **argv)
  *    it immediately.  
  */
 int builtin_cmd(char **argv) {
-    //I believe that execuuring immediately means 0, its also possible that bg and fg should have different return values
+    //I believe that executing immediately means 0, its also possible that bg and fg should have different return values
     //not sure if bg means it shoukd never be terminated, or it should wait until the end
     //pretty sure it probably should be run immediately, and just never terminated
-    if(argv[0] == "bg" || argv[0] == "fg"){
+    if(!strcmp(argv[0],"bg")){
         //almost positive that this should be in eval, the textbook/website code is only for a shell that has 2 commands
         //so we will likely have to adjust eval and that will include using this method there
         //built in command just tells us what we should do, but other methods will actually do it
-        do_bgfg(argv);
+        return 0;
+    }
+    if(!strcmp(argv[0],"fg")){
+        return 0;
+    }
+    if(!strcmp(argv[0],"jobs")){
+        
+        int i;
+        //printf("hi");
+        for (i = 0; i < MAXJOBS; i++) {
+            if (jobs[i].pid != 0) {
+                if (jobs[i].state == BG) {
+                    printf("[%d] (%d) ", jobs[i].jid, jobs[i].pid);
+                    
+                }
+                //listjobs
+            }
+        }
         return 1;
+        
     }
     if (!strcmp(argv[0], "quit")){ /* quit command */
         // sigchld_handler(0); //NEED TO FIGURE OUT WHAT TO PASS IN
@@ -296,6 +322,7 @@ int builtin_cmd(char **argv) {
 //not sure if this is where, but the basic idea/purpose of execve is to run a program
 //this would be done by forking, the child would execute and the parent would continue being a shell (minute 17 in recitation)
 void do_bgfg(char **argv) {
+    
     return;
 }
 
@@ -357,6 +384,7 @@ void sigchld_handler(int sig) {
 //check page 799/800
 void sigint_handler(int sig) 
 {
+
     return;
 }
 
