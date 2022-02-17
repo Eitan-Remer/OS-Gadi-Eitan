@@ -209,8 +209,9 @@ void eval(char *cmdline)
             int status;
             if (waitpid(pid, &status, 0) < 0)
                 unix_error("waitfg: waitpid error");
-        }else
+        }else{
             printf("%d %s", pid, cmdline);
+        }
     }
     return;
 }
@@ -277,6 +278,7 @@ int parseline(const char *cmdline, char **argv)
  *    it immediately.  
  */
 int builtin_cmd(char **argv) {
+    //printf(" in builtin cmd ");
     //I believe that executing immediately means 0, its also possible that bg and fg should have different return values
     //not sure if bg means it shoukd never be terminated, or it should wait until the end
     //pretty sure it probably should be run immediately, and just never terminated
@@ -290,7 +292,7 @@ int builtin_cmd(char **argv) {
         return 0;
     }
     if(!strcmp(argv[0],"jobs")){
-        
+        printf("IN JOBS");
         int i;
         //printf("hi");
         for (i = 0; i < MAXJOBS; i++) {
@@ -304,6 +306,8 @@ int builtin_cmd(char **argv) {
         }
         return 1;
         
+    } else {
+        printf("   %s   ", argv[0]);
     }
     if (!strcmp(argv[0], "quit")){ /* quit command */
         // sigchld_handler(0); //NEED TO FIGURE OUT WHAT TO PASS IN
