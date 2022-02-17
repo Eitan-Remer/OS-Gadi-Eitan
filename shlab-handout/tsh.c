@@ -202,6 +202,19 @@ void eval(char *cmdline)
             }
         } else {
             addjob(jobs,pid, bg+1, buf);
+            int i;
+        //printf("hi");
+        //this is the code that we moved, prints a two where it should print a one, 
+        //still not sure if its the right place, but i think it is
+            for (i = 0; i < MAXJOBS; i++) {
+                if (jobs[i].pid != 0) {
+                    if (jobs[i].state == BG) {
+                        //printf("   %c   \n", jobs[i]);
+                        printf("[%d] (%d) \n", jobs[i].jid, jobs[i].pid);
+                    }
+                    //listjobs
+                }
+            }
         }
     
 	/* Parent waits for foreground job to terminate */
@@ -210,7 +223,7 @@ void eval(char *cmdline)
             if (waitpid(pid, &status, 0) < 0)
                 unix_error("waitfg: waitpid error");
         }else{
-            printf("%d %s", pid, cmdline);
+            //printf("%d %s", pid, cmdline);
         }
     }
     return;
@@ -277,6 +290,9 @@ int parseline(const char *cmdline, char **argv)
  * builtin_cmd - If the user has typed a built-in command then execute
  *    it immediately.  
  */
+/*
+* If its a builtin command, return 1, otherwise 0
+*/
 int builtin_cmd(char **argv) {
     //printf(" in builtin cmd ");
     //I believe that executing immediately means 0, its also possible that bg and fg should have different return values
@@ -286,28 +302,27 @@ int builtin_cmd(char **argv) {
         //almost positive that this should be in eval, the textbook/website code is only for a shell that has 2 commands
         //so we will likely have to adjust eval and that will include using this method there
         //built in command just tells us what we should do, but other methods will actually do it
-        return 0;
+        return 1;
     }
     if(!strcmp(argv[0],"fg")){
-        return 0;
+        return 1;
     }
     if(!strcmp(argv[0],"jobs")){
         printf("IN JOBS");
-        int i;
-        //printf("hi");
-        for (i = 0; i < MAXJOBS; i++) {
-            if (jobs[i].pid != 0) {
-                if (jobs[i].state == BG) {
-                    printf("[%d] (%d) ", jobs[i].jid, jobs[i].pid);
-                    
-                }
-                //listjobs
-            }
-        }
+        // int i;
+        // //printf("hi");
+        // for (i = 0; i < MAXJOBS; i++) {
+        //     if (jobs[i].pid != 0) {
+        //         if (jobs[i].state == BG) {
+        //             printf("[%d] (%d) ", jobs[i].jid, jobs[i].pid);
+        //         }
+        //         //listjobs
+        //     }
+        // }
         return 1;
         
     } else {
-        printf("   %s   ", argv[0]);
+        //printf("   %s   ", argv[0]);
     }
     if (!strcmp(argv[0], "quit")){ /* quit command */
         // sigchld_handler(0); //NEED TO FIGURE OUT WHAT TO PASS IN
@@ -423,7 +438,7 @@ void initjobs(struct job_t *jobs) {
     int i;
 
     for (i = 0; i < MAXJOBS; i++)
-	clearjob(&jobs[i]);
+	    clearjob(&jobs[i]);
 }
 
 /* maxjid - Returns largest allocated job ID */
@@ -446,18 +461,18 @@ int addjob(struct job_t *jobs, pid_t pid, int state, char *cmdline)
 	return 0;
 
     for (i = 0; i < MAXJOBS; i++) {
-	if (jobs[i].pid == 0) {
-	    jobs[i].pid = pid;
-	    jobs[i].state = state;
-	    jobs[i].jid = nextjid++;
-	    if (nextjid > MAXJOBS)
-		nextjid = 1;
-	    strcpy(jobs[i].cmdline, cmdline);
-  	    if(verbose){
-	        printf("Added job [%d] %d %s\n", jobs[i].jid, jobs[i].pid, jobs[i].cmdline);
-            }
-            return 1;
-	}
+        if (jobs[i].pid == 0) {
+            jobs[i].pid = pid;
+            jobs[i].state = state;
+            jobs[i].jid = nextjid++;
+            if (nextjid > MAXJOBS)
+            nextjid = 1;
+            strcpy(jobs[i].cmdline, cmdline);
+            if(verbose){
+                printf("Added job [%d] %d %s\n", jobs[i].jid, jobs[i].pid, jobs[i].cmdline);
+                }
+                return 1;
+        }
     }
     printf("Tried to create too many jobs\n");
     return 0;
