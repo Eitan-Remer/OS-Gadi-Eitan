@@ -183,8 +183,8 @@ void eval(char *cmdline)
     pid_t pid;           /* Process id */
     
     strcpy(buf, cmdline);
-    
-    //printf("strcpy");
+    //moved the loop again, put in these print statements to see where/how many times it entered 
+    printf("  start  ");
     bg = parseline(buf, argv); 
     // if ((pid = fork()) == 0) {
     // } else {
@@ -195,26 +195,14 @@ void eval(char *cmdline)
 	    return;   /* Ignore empty lines */
 
     if (!builtin_cmd(argv)) { 
+        printf("  end  ");
         if ((pid = fork()) == 0) {   /* Child runs user job */
             if (execve(argv[0], argv, environ) < 0) {
                 printf("%s: Command not found.\n", argv[0]);
                 exit(0);
             }
         } else {
-            addjob(jobs,pid, bg+1, buf);
-            int i;
-        //printf("hi");
-        //this is the code that we moved, prints a two where it should print a one, 
-        //still not sure if its the right place, but i think it is
-            for (i = 0; i < MAXJOBS; i++) {
-                if (jobs[i].pid != 0) {
-                    if (jobs[i].state == BG) {
-                        //printf("   %c   \n", jobs[i]);
-                        printf("[%d] (%d) \n", jobs[i].jid, jobs[i].pid);
-                    }
-                    //listjobs
-                }
-            }
+            addjob(jobs,pid, bg+1, cmdline);
         }
     
 	/* Parent waits for foreground job to terminate */
@@ -223,7 +211,20 @@ void eval(char *cmdline)
             if (waitpid(pid, &status, 0) < 0)
                 unix_error("waitfg: waitpid error");
         }else{
-            //printf("%d %s", pid, cmdline);
+            int i;
+        //printf("hi");
+        //this is the code that we moved, prints a two where it should print a one, 
+        //still not sure if its the right place, but i think it is
+            for (i = 0; i < MAXJOBS; i++) {
+                if (jobs[i].pid != 0) {
+                    if (jobs[i].state == BG) {
+                        //printf("   %c   \n", jobs[i]);
+                        printf("[%d] (%d) ", jobs[i].jid, jobs[i].pid);
+                    }
+                    //listjobs
+                }
+            }
+            printf("%s", cmdline);
         }
     }
     return;
