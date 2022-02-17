@@ -194,13 +194,17 @@ void eval(char *cmdline)
     if (argv[0] == NULL)  
 	    return;   /* Ignore empty lines */
 
+    printf("hello");
+
     if (!builtin_cmd(argv)) { 
+        printf("lets go");
         if ((pid = fork()) == 0) {   /* Child runs user job */
             if (execve(argv[0], argv, environ) < 0) {
                 printf("%s: Command not found.\n", argv[0]);
                 exit(0);
             }
         } else {
+            printf("added Jobs");
             addjob(jobs,pid, bg+1, buf);
         }
     
@@ -290,7 +294,7 @@ int builtin_cmd(char **argv) {
         return 0;
     }
     if(!strcmp(argv[0],"jobs")){
-        
+        printf("DID IT WORK???");
         int i;
         //printf("hi");
         for (i = 0; i < MAXJOBS; i++) {
