@@ -12,7 +12,18 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <errno.h>
-
+/*
+*Usefull methods:
+* sigemptyset
+* sigaddset
+* sigprocmask
+* sigsuspend
+* waitpid
+* open
+* dup2
+* setpgid
+* kill
+*/
 
 /* Misc manifest constants */
 #define MAXLINE    1024   /* max line size */
@@ -282,6 +293,8 @@ int builtin_cmd(char **argv) {
  * do_bgfg - Execute the builtin bg and fg commands
  */
 //check page 790
+//not sure if this is where, but the basic idea/purpose of execve is to run a program
+//this would be done by forking, the child would execute and the parent would continue being a shell (minute 17 in recitation)
 void do_bgfg(char **argv) {
     return;
 }
