@@ -184,7 +184,7 @@ void eval(char *cmdline)
     
     strcpy(buf, cmdline);
     //moved the loop again, put in these print statements to see where/how many times it entered 
-    printf("  start  ");
+    //printf("  start  ");
     bg = parseline(buf, argv); 
     // if ((pid = fork()) == 0) {
     // } else {
@@ -195,14 +195,18 @@ void eval(char *cmdline)
 	    return;   /* Ignore empty lines */
 
     if (!builtin_cmd(argv)) { 
-        printf("  end  ");
-        if ((pid = fork()) == 0) {   /* Child runs user job */
+       // printf("  not a buitin command ");
+        if ((pid = fork()) == 0) {  
+            printf(" child\n"); /* Child runs user job */
+            //addjob(jobs,pid, bg+1, cmdline);
             if (execve(argv[0], argv, environ) < 0) {
                 printf("%s: Command not found.\n", argv[0]);
                 exit(0);
             }
+            printf(" after\n");
         } else {
-            addjob(jobs,pid, bg+1, cmdline);
+            addjob(jobs,pid, bg+1, buf);
+            printf(" parent\n");
         }
     
 	/* Parent waits for foreground job to terminate */
@@ -215,17 +219,20 @@ void eval(char *cmdline)
         //printf("hi");
         //this is the code that we moved, prints a two where it should print a one, 
         //still not sure if its the right place, but i think it is
-            for (i = 0; i < MAXJOBS; i++) {
-                if (jobs[i].pid != 0) {
-                    if (jobs[i].state == BG) {
-                        //printf("   %c   \n", jobs[i]);
-                        printf("[%d] (%d) ", jobs[i].jid, jobs[i].pid);
-                    }
-                    //listjobs
+        for (i = 0; i < MAXJOBS; i++) {
+            if (jobs[i].pid != 0) {
+                if (jobs[i].state == BG) {
+                    //printf("   %c   \n", jobs[i]);
+                    printf("[%d] (%d) ", jobs[i].jid, jobs[i].pid);
                 }
+                //listjobs
             }
-            printf("%s", cmdline);
         }
+        printf("%s", cmdline);
+        }
+    } else {
+        printf("HHIHIIHIHIHIHIH");
+        
     }
     return;
 }
@@ -456,6 +463,7 @@ int maxjid(struct job_t *jobs)
 /* addjob - Add a job to the job list */
 int addjob(struct job_t *jobs, pid_t pid, int state, char *cmdline) 
 {
+    printf("added job!! \n");
     int i;
     
     if (pid < 1)
@@ -488,11 +496,11 @@ int deletejob(struct job_t *jobs, pid_t pid)
 	return 0;
 
     for (i = 0; i < MAXJOBS; i++) {
-	if (jobs[i].pid == pid) {
-	    clearjob(&jobs[i]);
-	    nextjid = maxjid(jobs)+1;
-	    return 1;
-	}
+        if (jobs[i].pid == pid) {
+            clearjob(&jobs[i]);
+            nextjid = maxjid(jobs)+1;
+            return 1;
+        }
     }
     return 0;
 }
@@ -636,7 +644,7 @@ void sigquit_handler(int sig)
     printf("Terminating after receipt of SIGQUIT signal\n");
     exit(1);
 }
-pid_t fork1(void) {
+pid_t Fork1(void) {
     pid_t pid;
 
     if ((pid = fork()) < 0)
