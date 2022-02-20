@@ -198,16 +198,16 @@ void eval(char *cmdline)
     if (!builtin_cmd(argv)) { 
        // printf("  not a buitin command ");
         if ((pid = fork()) == 0) {  
-            printf(" child\n"); /* Child runs user job */
+            //printf(" child\n"); /* Child runs user job */
             //addjob(jobs,pid, bg+1, cmdline);
             if (execve(argv[0], argv, environ) < 0) {
                 printf("%s: Command not found.\n", argv[0]);
                 exit(0);
             }
-            printf(" after\n");
+            //printf(" after\n");
         } else {
-            addjob(jobs,pid, bg+1, buf);
-            printf(" parent\n");
+            //addjob(jobs,pid, bg+1, buf);
+            //printf(" parent\n");
         }
     
 	/* Parent waits for foreground job to terminate */
@@ -216,25 +216,14 @@ void eval(char *cmdline)
             if (waitpid(pid, &status, 0) < 0)
                 unix_error("waitfg: waitpid error");
         }else{
-            int i;
+            addjob(jobs,pid, bg+1, buf);
         //printf("hi");
         //this is the code that we moved, prints a two where it should print a one, 
         //still not sure if its the right place, but i think it is
-        for (i = 0; i < MAXJOBS; i++) {
-            if (jobs[i].pid != 0) {
-                if (jobs[i].state == BG) {
-                    //printf("   %c   \n", jobs[i]);
-                    printf("[%d] (%d) ", jobs[i].jid, jobs[i].pid);
-                }
-                //listjobs
+            do_bgfg(argv);
+            printf("%s", cmdline);
             }
-        }
-        printf("%s", cmdline);
-        }
-    } else {
-        printf("HHIHIIHIHIHIHIH");
-        
-    }
+    } 
     return;
 }
 
@@ -317,7 +306,8 @@ int builtin_cmd(char **argv) {
         return 1;
     }
     if(!strcmp(argv[0],"jobs")){
-        printf("IN JOBS");
+        listjobs(jobs);
+        //printf("IN JOBS");
         // int i;
         // //printf("hi");
         // for (i = 0; i < MAXJOBS; i++) {
@@ -350,7 +340,16 @@ int builtin_cmd(char **argv) {
 //not sure if this is where, but the basic idea/purpose of execve is to run a program
 //this would be done by forking, the child would execute and the parent would continue being a shell (minute 17 in recitation)
 void do_bgfg(char **argv) {
-    
+    int i;
+    for (i = 0; i < MAXJOBS; i++) {
+        if (jobs[i].pid != 0) {
+            if (jobs[i].state == BG && jobs[i].jid == nextjid -1) {
+                //printf("   %c   \n", jobs[i]);
+                printf("[%d] (%d) ", jobs[i].jid, jobs[i].pid);
+            }
+            //listjobs
+        }
+    }
     return;
 }
 
@@ -464,7 +463,6 @@ int maxjid(struct job_t *jobs)
 /* addjob - Add a job to the job list */
 int addjob(struct job_t *jobs, pid_t pid, int state, char *cmdline) 
 {
-    printf("added job!! \n");
     int i;
     
     if (pid < 1)
@@ -482,6 +480,8 @@ int addjob(struct job_t *jobs, pid_t pid, int state, char *cmdline)
                 printf("Added job [%d] %d %s\n", jobs[i].jid, jobs[i].pid, jobs[i].cmdline);
                 }
                 return 1;
+        } else {
+            //printf("not zero");
         }
     }
     printf("Tried to create too many jobs\n");
