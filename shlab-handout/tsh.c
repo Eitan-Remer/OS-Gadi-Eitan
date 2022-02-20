@@ -409,8 +409,7 @@ void sigchld_handler(int sig) {
  *    to the foreground job.  
  */
 //check page 799/800
-void sigint_handler(int sig) 
-{
+void sigint_handler(int sig) {
 
     return;
 }
