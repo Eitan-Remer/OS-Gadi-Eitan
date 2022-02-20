@@ -195,25 +195,17 @@ void eval(char *cmdline)
     if (argv[0] == NULL)  
 	    return;   /* Ignore empty lines */
 
-    printf("hello");
-
     if (!builtin_cmd(argv)) { 
-<<<<<<< HEAD
-        printf("lets go");
-        if ((pid = fork()) == 0) {   /* Child runs user job */
-=======
        // printf("  not a buitin command ");
         if ((pid = fork()) == 0) {  
             printf(" child\n"); /* Child runs user job */
             //addjob(jobs,pid, bg+1, cmdline);
->>>>>>> 380b4b5102df07fe24243091fc2a8e25515d484e
             if (execve(argv[0], argv, environ) < 0) {
                 printf("%s: Command not found.\n", argv[0]);
                 exit(0);
             }
             printf(" after\n");
         } else {
-            printf("added Jobs");
             addjob(jobs,pid, bg+1, buf);
             printf(" parent\n");
         }
@@ -325,20 +317,6 @@ int builtin_cmd(char **argv) {
         return 1;
     }
     if(!strcmp(argv[0],"jobs")){
-<<<<<<< HEAD
-        // printf("IN JOBS");
-        int i;
-        //printf("hi");
-        for (i = 0; i < MAXJOBS; i++) {
-            if (jobs[i].pid != 0) {
-                if (jobs[i].state == BG) {
-                    printf("[%d] (%d) ", jobs[i].jid, jobs[i].pid);
-                    
-                }
-                //listjobs
-            }
-        }
-=======
         printf("IN JOBS");
         // int i;
         // //printf("hi");
@@ -350,7 +328,6 @@ int builtin_cmd(char **argv) {
         //         //listjobs
         //     }
         // }
->>>>>>> 380b4b5102df07fe24243091fc2a8e25515d484e
         return 1;
         
     } else {
