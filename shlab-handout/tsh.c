@@ -183,8 +183,8 @@ void eval(char *cmdline)
     pid_t pid;           /* Process id */
     
     strcpy(buf, cmdline);
-    
-    //printf("strcpy");
+    //moved the loop again, put in these print statements to see where/how many times it entered 
+    //printf("  start  ");
     bg = parseline(buf, argv); 
     // if ((pid = fork()) == 0) {
     // } else {
@@ -197,15 +197,24 @@ void eval(char *cmdline)
     printf("hello");
 
     if (!builtin_cmd(argv)) { 
+<<<<<<< HEAD
         printf("lets go");
         if ((pid = fork()) == 0) {   /* Child runs user job */
+=======
+       // printf("  not a buitin command ");
+        if ((pid = fork()) == 0) {  
+            printf(" child\n"); /* Child runs user job */
+            //addjob(jobs,pid, bg+1, cmdline);
+>>>>>>> 380b4b5102df07fe24243091fc2a8e25515d484e
             if (execve(argv[0], argv, environ) < 0) {
                 printf("%s: Command not found.\n", argv[0]);
                 exit(0);
             }
+            printf(" after\n");
         } else {
             printf("added Jobs");
             addjob(jobs,pid, bg+1, buf);
+            printf(" parent\n");
         }
     
 	/* Parent waits for foreground job to terminate */
@@ -214,8 +223,24 @@ void eval(char *cmdline)
             if (waitpid(pid, &status, 0) < 0)
                 unix_error("waitfg: waitpid error");
         }else{
-            printf("%d %s", pid, cmdline);
+            int i;
+        //printf("hi");
+        //this is the code that we moved, prints a two where it should print a one, 
+        //still not sure if its the right place, but i think it is
+        for (i = 0; i < MAXJOBS; i++) {
+            if (jobs[i].pid != 0) {
+                if (jobs[i].state == BG) {
+                    //printf("   %c   \n", jobs[i]);
+                    printf("[%d] (%d) ", jobs[i].jid, jobs[i].pid);
+                }
+                //listjobs
+            }
         }
+        printf("%s", cmdline);
+        }
+    } else {
+        printf("HHIHIIHIHIHIHIH");
+        
     }
     return;
 }
@@ -281,6 +306,9 @@ int parseline(const char *cmdline, char **argv)
  * builtin_cmd - If the user has typed a built-in command then execute
  *    it immediately.  
  */
+/*
+* If its a builtin command, return 1, otherwise 0
+*/
 int builtin_cmd(char **argv) {
     //printf(" in builtin cmd ");
     //I believe that executing immediately means 0, its also possible that bg and fg should have different return values
@@ -290,12 +318,13 @@ int builtin_cmd(char **argv) {
         //almost positive that this should be in eval, the textbook/website code is only for a shell that has 2 commands
         //so we will likely have to adjust eval and that will include using this method there
         //built in command just tells us what we should do, but other methods will actually do it
-        return 0;
+        return 1;
     }
     if(!strcmp(argv[0],"fg")){
-        return 0;
+        return 1;
     }
     if(!strcmp(argv[0],"jobs")){
+<<<<<<< HEAD
         // printf("IN JOBS");
         int i;
         //printf("hi");
@@ -308,10 +337,23 @@ int builtin_cmd(char **argv) {
                 //listjobs
             }
         }
+=======
+        printf("IN JOBS");
+        // int i;
+        // //printf("hi");
+        // for (i = 0; i < MAXJOBS; i++) {
+        //     if (jobs[i].pid != 0) {
+        //         if (jobs[i].state == BG) {
+        //             printf("[%d] (%d) ", jobs[i].jid, jobs[i].pid);
+        //         }
+        //         //listjobs
+        //     }
+        // }
+>>>>>>> 380b4b5102df07fe24243091fc2a8e25515d484e
         return 1;
         
     } else {
-        printf("   %s   ", argv[0]);
+        //printf("   %s   ", argv[0]);
     }
     if (!strcmp(argv[0], "quit")){ /* quit command */
         // sigchld_handler(0); //NEED TO FIGURE OUT WHAT TO PASS IN
@@ -427,7 +469,7 @@ void initjobs(struct job_t *jobs) {
     int i;
 
     for (i = 0; i < MAXJOBS; i++)
-	clearjob(&jobs[i]);
+	    clearjob(&jobs[i]);
 }
 
 /* maxjid - Returns largest allocated job ID */
@@ -444,24 +486,25 @@ int maxjid(struct job_t *jobs)
 /* addjob - Add a job to the job list */
 int addjob(struct job_t *jobs, pid_t pid, int state, char *cmdline) 
 {
+    printf("added job!! \n");
     int i;
     
     if (pid < 1)
 	return 0;
 
     for (i = 0; i < MAXJOBS; i++) {
-	if (jobs[i].pid == 0) {
-	    jobs[i].pid = pid;
-	    jobs[i].state = state;
-	    jobs[i].jid = nextjid++;
-	    if (nextjid > MAXJOBS)
-		nextjid = 1;
-	    strcpy(jobs[i].cmdline, cmdline);
-  	    if(verbose){
-	        printf("Added job [%d] %d %s\n", jobs[i].jid, jobs[i].pid, jobs[i].cmdline);
-            }
-            return 1;
-	}
+        if (jobs[i].pid == 0) {
+            jobs[i].pid = pid;
+            jobs[i].state = state;
+            jobs[i].jid = nextjid++;
+            if (nextjid > MAXJOBS)
+            nextjid = 1;
+            strcpy(jobs[i].cmdline, cmdline);
+            if(verbose){
+                printf("Added job [%d] %d %s\n", jobs[i].jid, jobs[i].pid, jobs[i].cmdline);
+                }
+                return 1;
+        }
     }
     printf("Tried to create too many jobs\n");
     return 0;
@@ -476,11 +519,11 @@ int deletejob(struct job_t *jobs, pid_t pid)
 	return 0;
 
     for (i = 0; i < MAXJOBS; i++) {
-	if (jobs[i].pid == pid) {
-	    clearjob(&jobs[i]);
-	    nextjid = maxjid(jobs)+1;
-	    return 1;
-	}
+        if (jobs[i].pid == pid) {
+            clearjob(&jobs[i]);
+            nextjid = maxjid(jobs)+1;
+            return 1;
+        }
     }
     return 0;
 }
@@ -624,7 +667,7 @@ void sigquit_handler(int sig)
     printf("Terminating after receipt of SIGQUIT signal\n");
     exit(1);
 }
-pid_t fork1(void) {
+pid_t Fork1(void) {
     pid_t pid;
 
     if ((pid = fork()) < 0)
