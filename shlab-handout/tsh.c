@@ -24,6 +24,7 @@
 * setpgid
 * kill
 */
+//kill mee
 
 /* Misc manifest constants */
 #define MAXLINE    1024   /* max line size */
