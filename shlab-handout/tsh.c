@@ -211,6 +211,7 @@ void eval(char *cmdline)
         }
     
 	/* Parent waits for foreground job to terminate */
+        
         if (!bg) {
             int status;
             if (waitpid(pid, &status, 0) < 0)
@@ -222,7 +223,7 @@ void eval(char *cmdline)
         //still not sure if its the right place, but i think it is
             do_bgfg(argv);
             printf("%s", cmdline);
-            }
+        }
     } 
     return;
 }
@@ -306,8 +307,8 @@ int builtin_cmd(char **argv) {
         return 1;
     }
     if(!strcmp(argv[0],"jobs")){
+        printf("IN JOBS");
         listjobs(jobs);
-        //printf("IN JOBS");
         // int i;
         // //printf("hi");
         // for (i = 0; i < MAXJOBS; i++) {
@@ -410,7 +411,19 @@ void sigchld_handler(int sig) {
  */
 //check page 799/800
 void sigint_handler(int sig) {
-
+    int i;
+    for (i = 0; i < MAXJOBS; i++) {
+        printf("in for loop\n");
+        if (jobs[i].pid != 0) {
+            
+            //if (jobs[i].state == FG) {
+                //printf("   %c   \n", jobs[i]);
+                printf("Job [%d] (%d) ", jobs[i].jid, jobs[i].pid);
+                //kill()
+            //}
+            //listjobs
+        }
+    }
     return;
 }
 
@@ -462,6 +475,7 @@ int maxjid(struct job_t *jobs)
 /* addjob - Add a job to the job list */
 int addjob(struct job_t *jobs, pid_t pid, int state, char *cmdline) 
 {
+    printf("added job");
     int i;
     
     if (pid < 1)
