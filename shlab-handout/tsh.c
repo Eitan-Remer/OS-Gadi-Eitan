@@ -53,6 +53,7 @@ char prompt[] = "tsh> ";    /* command line prompt (DO NOT CHANGE) */
 int verbose = 0;            /* if true, print additional output */
 int nextjid = 1;            /* next job ID to allocate */
 char sbuf[MAXLINE];         /* for composing sprintf messages */
+int counterToFix = 0;
 
 struct job_t {              /* The job struct */
     pid_t pid;              /* job PID */
@@ -182,6 +183,7 @@ void eval(char *cmdline)
     char buf[MAXLINE];   /* Holds modified command line */
     int bg;              /* Should the job run in bg or fg? */
     pid_t pid;           /* Process id */
+    counterToFix++;
     
     strcpy(buf, cmdline);
     //moved the loop again, put in these print statements to see where/how many times it entered 
@@ -211,13 +213,24 @@ void eval(char *cmdline)
         }
     
 	/* Parent waits for foreground job to terminate */
-        
+            
+        // int i;
+        // for (i = 0; i < MAXJOBS; i++) {
+        //     if (jobs[i].pid == 0) {
+                // if (jobs[i].state == BG && jobs[i].jid == nextjid) {
+        //printf("%d, pid", pid);
+        if(counterToFix % 2 == 0){
+            addjob(jobs,pid, bg+1, buf);
+        }
+                //listjobs
+        //     }
+        // }
         if (!bg) {
             int status;
             if (waitpid(pid, &status, 0) < 0)
                 unix_error("waitfg: waitpid error");
         }else{
-            addjob(jobs,pid, bg+1, buf);
+            // addjob(jobs,pid, bg+1, buf);
         //printf("hi");
         //this is the code that we moved, prints a two where it should print a one, 
         //still not sure if its the right place, but i think it is
@@ -307,7 +320,7 @@ int builtin_cmd(char **argv) {
         return 1;
     }
     if(!strcmp(argv[0],"jobs")){
-        printf("IN JOBS");
+        //printf("IN JOBS");
         listjobs(jobs);
         // int i;
         // //printf("hi");
@@ -412,15 +425,19 @@ void sigchld_handler(int sig) {
 //check page 799/800
 void sigint_handler(int sig) {
     int i;
+    // pid_t temp;
     for (i = 0; i < MAXJOBS; i++) {
-        printf("in for loop\n");
         if (jobs[i].pid != 0) {
             
-            //if (jobs[i].state == FG) {
+            if (jobs[i].state == FG) {
                 //printf("   %c   \n", jobs[i]);
                 printf("Job [%d] (%d) ", jobs[i].jid, jobs[i].pid);
-                //kill()
-            //}
+                kill(jobs[i].pid, sig);
+                deletejob(jobs, jobs[i].pid);
+                printf("terminated by signal %d\n", sig);
+                // temp = jobs[i].pid;
+                
+            }
             //listjobs
         }
     }
@@ -475,7 +492,7 @@ int maxjid(struct job_t *jobs)
 /* addjob - Add a job to the job list */
 int addjob(struct job_t *jobs, pid_t pid, int state, char *cmdline) 
 {
-    printf("added job");
+    //printf("added job");
     int i;
     
     if (pid < 1)
@@ -489,10 +506,11 @@ int addjob(struct job_t *jobs, pid_t pid, int state, char *cmdline)
             if (nextjid > MAXJOBS)
             nextjid = 1;
             strcpy(jobs[i].cmdline, cmdline);
+            //printf("Added job [%d] %d %s\n", jobs[i].jid, jobs[i].pid, jobs[i].cmdline);
             if(verbose){
                 printf("Added job [%d] %d %s\n", jobs[i].jid, jobs[i].pid, jobs[i].cmdline);
-                }
-                return 1;
+            }
+            return 1;
         } else {
             //printf("not zero");
         }
