@@ -451,7 +451,28 @@ void sigint_handler(int sig) {
  */
 void sigtstp_handler(int sig) 
 {
-    return;
+    printf("AHHHHHHH\n");
+    int i;
+    printf("PENIS\n");
+    // pid_t temp;
+    for (i = 0; i < MAXJOBS; i++) {
+        printf("in loop");
+        if (jobs[i].pid != 0) {
+            printf("IN IF");
+            if (jobs[i].state == FG) {
+                jobs[i].state = ST;
+                //printf("   %c   \n", jobs[i]);
+                printf("Job [%d] (%d) ", jobs[i].jid, jobs[i].pid);
+                //kill(jobs[i].pid, sig);
+                //deletejob(jobs, jobs[i].pid);
+                printf("terminated by signal %d\n", sig);
+                // temp = jobs[i].pid;
+                
+            }
+            //listjobs
+        }
+    }
+    printf("jimmy johns long johns");
 }
 
 /*********************
