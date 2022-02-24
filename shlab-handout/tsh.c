@@ -54,6 +54,9 @@ int verbose = 0;            /* if true, print additional output */
 int nextjid = 1;            /* next job ID to allocate */
 char sbuf[MAXLINE];         /* for composing sprintf messages */
 int counterToFix = 0;
+pid_t stoppedPID;
+int stoppedI;
+int imTiredOfLife = 0;
 
 struct job_t {              /* The job struct */
     pid_t pid;              /* job PID */
@@ -202,6 +205,7 @@ void eval(char *cmdline)
         if ((pid = fork()) == 0) {  
             //printf(" child\n"); /* Child runs user job */
             //addjob(jobs,pid, bg+1, cmdline);
+            //setpgid(0, 0);
             if (execve(argv[0], argv, environ) < 0) {
                 printf("%s: Command not found.\n", argv[0]);
                 exit(0);
@@ -221,7 +225,7 @@ void eval(char *cmdline)
         //printf("%d, pid", pid);
         if(counterToFix % 2 == 0){
             addjob(jobs,pid, bg+1, buf);
-        }
+        } 
                 //listjobs
         //     }
         // }
@@ -237,7 +241,20 @@ void eval(char *cmdline)
             do_bgfg(argv);
             printf("%s", cmdline);
         }
-    } 
+    } else {
+        if(strcmp(argv[0], "bg") == 0) {
+            if (jobs[stoppedI].state == ST && jobs[stoppedI].jid == stoppedPID ){
+                jobs[stoppedI].state = BG; 
+                kill(-jobs[stoppedI].pid, SIGCONT);
+                printf("[%d] (%d) %s", jobs[stoppedI].jid, jobs[stoppedI].pid, jobs[stoppedI].cmdline);
+                
+            }
+            //pthread_kill(jobs[stoppedI].pid, SIGCONT);  
+        }                            // Send SIGCONT signal to entire group of the given job
+    }
+        //printf("potato");
+        
+    
     return;
 }
 
@@ -311,6 +328,7 @@ int builtin_cmd(char **argv) {
     //not sure if bg means it shoukd never be terminated, or it should wait until the end
     //pretty sure it probably should be run immediately, and just never terminated
     if(!strcmp(argv[0],"bg")){
+        
         //almost positive that this should be in eval, the textbook/website code is only for a shell that has 2 commands
         //so we will likely have to adjust eval and that will include using this method there
         //built in command just tells us what we should do, but other methods will actually do it
@@ -451,28 +469,30 @@ void sigint_handler(int sig) {
  */
 void sigtstp_handler(int sig) 
 {
-    printf("AHHHHHHH\n");
+    printf("balls\n");
     int i;
-    printf("PENIS\n");
     // pid_t temp;
     for (i = 0; i < MAXJOBS; i++) {
-        printf("in loop");
         if (jobs[i].pid != 0) {
-            printf("IN IF");
             if (jobs[i].state == FG) {
                 jobs[i].state = ST;
                 //printf("   %c   \n", jobs[i]);
+                //kill(-jobs[i].pid, sig);
+
+                stoppedPID = jobs[i].jid;
+                stoppedI = i;
                 printf("Job [%d] (%d) ", jobs[i].jid, jobs[i].pid);
                 //kill(jobs[i].pid, sig);
                 //deletejob(jobs, jobs[i].pid);
-                printf("terminated by signal %d\n", sig);
+                printf("stopped by signal %d\n", sig);
                 // temp = jobs[i].pid;
                 
-            }
+            } 
             //listjobs
-        }
+        } else if(jobs[i].state == BG) {
+            printf("Job [%d] (%d) ", jobs[i].jid, jobs[i].pid);
+        } 
     }
-    printf("jimmy johns long johns");
 }
 
 /*********************
