@@ -332,9 +332,11 @@ int builtin_cmd(char **argv) {
         //almost positive that this should be in eval, the textbook/website code is only for a shell that has 2 commands
         //so we will likely have to adjust eval and that will include using this method there
         //built in command just tells us what we should do, but other methods will actually do it
+        do_bgfg(argv);
         return 1;
     }
     if(!strcmp(argv[0],"fg")){
+        do_bgfg(argv);
         return 1;
     }
     if(!strcmp(argv[0],"jobs")){
@@ -373,11 +375,19 @@ int builtin_cmd(char **argv) {
 //this would be done by forking, the child would execute and the parent would continue being a shell (minute 17 in recitation)
 void do_bgfg(char **argv) {
     int i;
+    int is_job_id = 0;
+    if((argv[1][0] == '%')) {
+        is_job_id = 1;
+    }
+    if (is_job_id){
+        jobs[atoi(&argv[1][1])].state = FG;
+    }
     for (i = 0; i < MAXJOBS; i++) {
         if (jobs[i].pid != 0) {
+            
             if (jobs[i].state == BG && jobs[i].jid == nextjid -1) {
                 //printf("   %c   \n", jobs[i]);
-                printf("[%d] (%d) ", jobs[i].jid, jobs[i].pid);
+                printf("[%d] (%d)\n", jobs[i].jid, jobs[i].pid);
             }
             //listjobs
         }
@@ -390,6 +400,14 @@ void do_bgfg(char **argv) {
  */
 void waitfg(pid_t pid)
 {
+    // waitpid(pid,NULL,0);
+    while(1){
+        // if(pid != ){
+
+        // }else{
+            waitpid(pid,NULL,0);
+        // }
+    }
     return;
 }
 
@@ -469,12 +487,15 @@ void sigint_handler(int sig) {
  */
 void sigtstp_handler(int sig) 
 {
-    printf("balls\n");
+    printf("STOPPED WAS CALLED\n");
     int i;
     // pid_t temp;
     for (i = 0; i < MAXJOBS; i++) {
         if (jobs[i].pid != 0) {
+            printf("IN THE STOPPED METHOD FIRST IF\n");
+
             if (jobs[i].state == FG) {
+                printf("STOP SHOULD BE CALLED NOW\n");
                 jobs[i].state = ST;
                 //printf("   %c   \n", jobs[i]);
                 //kill(-jobs[i].pid, sig);
