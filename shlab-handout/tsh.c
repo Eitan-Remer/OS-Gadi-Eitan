@@ -58,6 +58,7 @@ pid_t stoppedPID;
 int stoppedI;
 int imTiredOfLife = 0;
 
+
 struct job_t {              /* The job struct */
     pid_t pid;              /* job PID */
     int jid;                /* job ID [1, 2, ...] */
@@ -375,19 +376,31 @@ int builtin_cmd(char **argv) {
 //this would be done by forking, the child would execute and the parent would continue being a shell (minute 17 in recitation)
 void do_bgfg(char **argv) {
     int i;
+    int status;
     int is_job_id = 0;
     if((argv[1][0] == '%')) {
         is_job_id = 1;
     }
-    if (is_job_id){
-        jobs[atoi(&argv[1][1])].state = FG;
+    
+    if (is_job_id && strcmp(argv[0],"bg")){
+        // if (jobs[atoi(&argv[1][1])].state != FG)
+        //     jobs[atoi(&argv[1][1])].state = FG;
+        // else
+        //     jobs[atoi(&argv[1][1])].state = ST; 
+        struct job_t* j = getjobjid(jobs, atoi(&argv[1][1]));
+        if (j->state != FG)
+            j->state = FG;
+        else
+            j->state = ST; 
+        waitfg(j->pid);
     }
+
     for (i = 0; i < MAXJOBS; i++) {
         if (jobs[i].pid != 0) {
             
             if (jobs[i].state == BG && jobs[i].jid == nextjid -1) {
                 //printf("   %c   \n", jobs[i]);
-                printf("[%d] (%d)\n", jobs[i].jid, jobs[i].pid);
+                printf("[%d] (%d)", jobs[i].jid, jobs[i].pid);
             }
             //listjobs
         }
@@ -400,14 +413,25 @@ void do_bgfg(char **argv) {
  */
 void waitfg(pid_t pid)
 {
+    //printf("ENTERED WAIT FG");
+    int status;
+    if (waitpid(pid, &status, 0) > 1){
+        if (WIFEXITED(status)){
+            //printf("child %d terminated normally with exit status=%d\n", pid, WEXITSTATUS(status));
+        } else{
+            //printf("child %d terminated abnormally\n", pid);
+        } 
+    } else {
+        //printf("not terminated\n");
+    }
     // waitpid(pid,NULL,0);
-    while(1){
+    //while(1){
         // if(pid != ){
 
         // }else{
-            waitpid(pid,NULL,0);
+            //waitpid(pid,&status,0);
         // }
-    }
+    //}
     return;
 }
 
@@ -423,34 +447,33 @@ void waitfg(pid_t pid)
  *     currently running children to terminate.  
  */
 void sigchld_handler(int sig) {
-    // volatile sig_atomic_t pid;
-    // int olderrno = errno;
-    // pid = waitpid(-1, NULL, 0);
-    // errno = olderrno;
-    // sigset_t mask, prev;
+    int status;  
+    pid_t pid;  
+    //printf("sigchild\n");
+    //pid = waitpid(fgpid(jobs), &status, WNOHANG|WUNTRACED);
+    //printf("%d\n", fgpid(jobs));
+    // deletejob(jobs, fgpid(jobs));
 
-    // signal(SIGCHLD, sigchld_handler);
-    // signal(SIGINT, sigint_handler);
-    // sigemptyset(&mask);
-    // sigaddset(&mask, SIGCHLD);
-
-    // while (1) {
-    //     sigprocmask(SIG_BLOCK, &mask, &prev); /* Block SIGCHLD */
-    //     if (fork() == 0) /* Child */
-    //         exit(0);
-
-    //     /* Parent */
-    //     pid = 0; 
-    //     sigprocmask(SIG_SETMASK, &prev, NULL); /* Unblock SIGCHLD */
-        
-    //     /* Wait for SIGCHLD to be received (wasteful) */
-    //     while (!pid) 
-    //         ;
-
-    //     /* Do some work after receiving SIGCHLD */
-    //     printf(".");
-    // }
-    // exit(0);
+    while ((pid = waitpid(fgpid(jobs), &status, sig)) > 0) {  
+        //printf("enters while loop\n");
+        if (WIFSTOPPED(status)){ 
+            //change state if stopped
+            getjobpid(jobs, pid)->state = ST;
+            int jid = pid2jid(pid);
+            printf("Job [%d] (%d) Stopped by signal %d\n", jid, pid, WSTOPSIG(status));
+        }  
+        if (WIFSIGNALED(status)){
+            //delete is signaled
+            int jid = pid2jid(pid);  
+            printf("Job [%d] (%d) terminated by signal %d\n", jid, pid, WTERMSIG(status));
+            deletejob(jobs, pid);
+        }  
+        if (WIFEXITED(status)){  
+            //exited
+            deletejob(jobs, pid);  
+        }  
+    }  
+    return; 
 }
 
 /* 
@@ -487,15 +510,15 @@ void sigint_handler(int sig) {
  */
 void sigtstp_handler(int sig) 
 {
-    printf("STOPPED WAS CALLED\n");
+    //printf("STOPPED WAS CALLED\n");
     int i;
     // pid_t temp;
     for (i = 0; i < MAXJOBS; i++) {
         if (jobs[i].pid != 0) {
-            printf("IN THE STOPPED METHOD FIRST IF\n");
+            //printf("IN THE STOPPED METHOD FIRST IF\n");
 
             if (jobs[i].state == FG) {
-                printf("STOP SHOULD BE CALLED NOW\n");
+                //printf("STOP SHOULD BE CALLED NOW\n");
                 jobs[i].state = ST;
                 //printf("   %c   \n", jobs[i]);
                 //kill(-jobs[i].pid, sig);
