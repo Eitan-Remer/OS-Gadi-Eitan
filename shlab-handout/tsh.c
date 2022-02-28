@@ -188,6 +188,10 @@ void eval(char *cmdline)
     int bg;              /* Should the job run in bg or fg? */
     pid_t pid;           /* Process id */
     counterToFix++;
+
+    sigset_t mask;
+    sigemptyset(&mask);
+    sigaddset(&mask, SIGCHLD);
     
     strcpy(buf, cmdline);
     //moved the loop again, put in these print statements to see where/how many times it entered 
@@ -202,11 +206,12 @@ void eval(char *cmdline)
 	    return;   /* Ignore empty lines */
 
     if (!builtin_cmd(argv)) { 
+        sigprocmask(SIG_BLOCK, &mask, 0);
        // printf("  not a buitin command ");
         if ((pid = fork()) == 0) {  
             //printf(" child\n"); /* Child runs user job */
             //addjob(jobs,pid, bg+1, cmdline);
-            //setpgid(0, 0);
+            setpgid(0, 0);
             if (execve(argv[0], argv, environ) < 0) {
                 printf("%s: Command not found.\n", argv[0]);
                 exit(0);
@@ -227,6 +232,7 @@ void eval(char *cmdline)
         if(counterToFix % 2 == 0){
             addjob(jobs,pid, bg+1, buf);
         } 
+        sigprocmask(SIG_UNBLOCK, &mask, 0);
                 //listjobs
         //     }
         // }
@@ -413,26 +419,30 @@ void do_bgfg(char **argv) {
  */
 void waitfg(pid_t pid)
 {
+     while(fgpid(jobs) == pid){ //runs a endless loop till fg job is done then exits
+	  
+  }	       
+  return;
     //printf("ENTERED WAIT FG");
-    int status;
-    if (waitpid(pid, &status, 0) > 1){
-        if (WIFEXITED(status)){
-            //printf("child %d terminated normally with exit status=%d\n", pid, WEXITSTATUS(status));
-        } else{
-            //printf("child %d terminated abnormally\n", pid);
-        } 
-    } else {
-        //printf("not terminated\n");
-    }
-    // waitpid(pid,NULL,0);
-    //while(1){
-        // if(pid != ){
+    // int status;
+    // if (waitpid(pid, &status, 0) > 1){
+    //     if (WIFEXITED(status)){
+    //         //printf("child %d terminated normally with exit status=%d\n", pid, WEXITSTATUS(status));
+    //     } else{
+    //         //printf("child %d terminated abnormally\n", pid);
+    //     } 
+    // } else {
+    //     //printf("not terminated\n");
+    // }
+    // // waitpid(pid,NULL,0);
+    // //while(1){
+    //     // if(pid != ){
 
-        // }else{
-            //waitpid(pid,&status,0);
-        // }
-    //}
-    return;
+    //     // }else{
+    //         //waitpid(pid,&status,0);
+    //     // }
+    // //}
+    // return;
 }
 
 /*****************
@@ -452,23 +462,23 @@ void sigchld_handler(int sig) {
     //printf("sigchild\n");
     //pid = waitpid(fgpid(jobs), &status, WNOHANG|WUNTRACED);
     //printf("%d\n", fgpid(jobs));
-    deletejob(jobs, fgpid(jobs));
+    // deletejob(jobs, fgpid(jobs));
 
-    while ((pid = waitpid(fgpid(jobs), &status, sig)) > 0) {  
+    while ((pid = waitpid(fgpid(jobs), &status, WNOHANG|WUNTRACED)) > 0) {  
         //printf("enters while loop\n");
         if (WIFSTOPPED(status)){ 
             //change state if stopped
             getjobpid(jobs, pid)->state = ST;
             int jid = pid2jid(pid);
-            printf("Job [%d] (%d) Stopped by signal %d\n", jid, pid, WSTOPSIG(status));
+            printf("Job [%d] (%d) Stopped by signal %d\n", jid, pid, sig);
         }  
-        if (WIFSIGNALED(status)){
+        else if (WIFSIGNALED(status)){
             //delete is signaled
             int jid = pid2jid(pid);  
-            printf("Job [%d] (%d) terminated by signal %d\n", jid, pid, WTERMSIG(status));
+            printf("Job [%d] (%d) terminated by signal %d\n", jid, pid, sig);
             deletejob(jobs, pid);
         }  
-        if (WIFEXITED(status)){  
+        else if (WIFEXITED(status)){  
             //exited
             deletejob(jobs, pid);  
         }  
