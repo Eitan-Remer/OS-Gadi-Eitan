@@ -452,7 +452,7 @@ void sigchld_handler(int sig) {
     //printf("sigchild\n");
     //pid = waitpid(fgpid(jobs), &status, WNOHANG|WUNTRACED);
     //printf("%d\n", fgpid(jobs));
-    // deletejob(jobs, fgpid(jobs));
+    deletejob(jobs, fgpid(jobs));
 
     while ((pid = waitpid(fgpid(jobs), &status, sig)) > 0) {  
         //printf("enters while loop\n");
