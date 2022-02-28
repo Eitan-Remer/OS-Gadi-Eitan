@@ -229,9 +229,10 @@ void eval(char *cmdline)
         //     if (jobs[i].pid == 0) {
                 // if (jobs[i].state == BG && jobs[i].jid == nextjid) {
         //printf("%d, pid", pid);
-        if(counterToFix % 2 == 0){
-            addjob(jobs,pid, bg+1, buf);
-        } 
+            if(counterToFix % 2 == 0){
+                addjob(jobs,pid, bg+1, buf);
+            } 
+        
         sigprocmask(SIG_UNBLOCK, &mask, 0);
                 //listjobs
         //     }
@@ -240,6 +241,8 @@ void eval(char *cmdline)
             int status;
             if (waitpid(pid, &status, 0) < 0)
                 unix_error("waitfg: waitpid error");
+            
+
         }else{
             // addjob(jobs,pid, bg+1, buf);
         //printf("hi");
@@ -394,11 +397,13 @@ void do_bgfg(char **argv) {
         // else
         //     jobs[atoi(&argv[1][1])].state = ST; 
         struct job_t* j = getjobjid(jobs, atoi(&argv[1][1]));
-        if (j->state != FG)
+        if (j->state != FG){
             j->state = FG;
-        else
-            j->state = ST; 
-        waitfg(j->pid);
+            waitfg(j->pid);
+        }
+        // else
+        //     j->state = ST; 
+        
     }
 
     for (i = 0; i < MAXJOBS; i++) {
@@ -501,7 +506,7 @@ void sigint_handler(int sig) {
             if (jobs[i].state == FG) {
                 //printf("   %c   \n", jobs[i]);
                 printf("Job [%d] (%d) ", jobs[i].jid, jobs[i].pid);
-                kill(jobs[i].pid, sig);
+                kill(-jobs[i].pid, sig);
                 deletejob(jobs, jobs[i].pid);
                 printf("terminated by signal %d\n", sig);
                 // temp = jobs[i].pid;
@@ -536,7 +541,7 @@ void sigtstp_handler(int sig)
                 stoppedPID = jobs[i].jid;
                 stoppedI = i;
                 printf("Job [%d] (%d) ", jobs[i].jid, jobs[i].pid);
-                //kill(jobs[i].pid, sig);
+                //kill(-jobs[i].pid, sig);
                 //deletejob(jobs, jobs[i].pid);
                 printf("stopped by signal %d\n", sig);
                 // temp = jobs[i].pid;
@@ -811,7 +816,7 @@ void Kill(pid_t pid, int signum)
 {
     int rc;
 
-    if ((rc = kill(pid, signum)) < 0)
+    if ((rc = kill(-pid, signum)) < 0)
 	unix_error("Kill error");
 }
 /* $end kill */
