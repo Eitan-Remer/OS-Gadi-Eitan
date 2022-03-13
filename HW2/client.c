@@ -55,9 +55,9 @@ int establishConnection(struct addrinfo *info) {
 }
 
 // Send GET request
-void GET(int clientfd, char *path) {
+void GET(int clientfd, char *host, char *port, char *path) {
   char req[1000] = {0};
-  sprintf(req, "GET %s HTTP/1.0\r\n\r\n", path);
+  sprintf(req, "GET %s HTTP/1.1\r\nHost: %s:%s\r\n\r\n", path,host,port);
   send(clientfd, req, strlen(req), 0);
 }
 
@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
   }
 
   // Send GET request > stdout
-  GET(clientfd, argv[3]);
+  GET(clientfd, argv[1], argv[2], argv[3]);
   while (recv(clientfd, buf, BUF_SIZE, 0) > 0) {
     fputs(buf, stdout);
     memset(buf, 0, BUF_SIZE);
